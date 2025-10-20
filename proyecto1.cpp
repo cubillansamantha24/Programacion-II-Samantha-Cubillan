@@ -1,4 +1,8 @@
 #include<iostream>
+#include<cstring>
+#include<iomanip>
+#include<ctime>
+#include<locale>
 using namespace std;
 
 void imprimirOpciones(){
@@ -180,11 +184,61 @@ Hospital* inicializarhospital(const char* nombre, const char* direccion, const c
 
     return hospital;
 
-
-
-
-
 }
+void redimensionararregloPacientes(Hospital* hospital){
+    int nuevaCapacidad = hospital->capacidadPacientes * 2;
+    Paciente* nuevoarr = new Paciente[nuevaCapacidad];
+
+    for (int i = 0; i< hospital->cantidadPacientes; i++){
+        nuevoarr[i] = hospital->pacientes[i];
+    }
+
+    delete[] hospital->pacientes;
+    hospital->pacientes = nuevoarr;
+    hospital->cantidadPacientes = nuevaCapacidad;
+}
+
+Paciente* crearPaciente(Hospital* hospital, const char* nombre, const char* apellido, const char* cedula, int edad, char sexo ){
+    if(buscarPacientePorCedula(hospital, cedula) !=nullptr){
+        cout<< "Error: Cedula ya registrada."<< endl;
+        return nullptr;
+    }
+    if(hospital->cantidadPacientes >= hospital->cantidadPacientes){
+        redimensionararregloPacientes(hospital);
+    }
+}
+
+Paciente& nuevo = hospital->pacientes[hospital->cantidadPacientes];
+
+nuevo.id = hospital->siguienteIdPaciente++;
+strncpy(nuevo.nombre, nombre, 50);
+strncpy(nuevo.apellido, apellido, 50);
+strncpy(nuevo.cedula, cedula, 20);
+
+nuevo.edad= edad;
+
+nuevo.sexo= sexo;
+
+strcpy(nuevo.tipoSangre, "");
+strcpy(nuevo.telefono, "");
+strcpy(nuevo.direccion, "");
+strcpy(nuevo.email, "");
+strcpy(nuevo.alergias, "");
+strcpy(nuevo.observaciones, "");
+nuevo.activo= true;
+
+nuevo.capacidadHistorial = 5;
+nuevo.cantidadConsultas =0;
+nuevo.historial = new HistorialMedico[nuevo.capacidadCitas];
+
+nuevo.capacidadCitas =5;
+nuevo.cantidadCitas =0;
+nuevo.citasAgendadas = new int[nuevo.capacidadCitas];
+
+hospital->cantidadPacientes++;
+
+return &nuevo;
+
 
 int main(){
  int opcionpacientesw=0;
