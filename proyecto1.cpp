@@ -3,6 +3,7 @@
 #include<iomanip>
 #include<ctime>
 #include<locale>
+
 using namespace std;
 
 void imprimirOpciones(){
@@ -159,6 +160,7 @@ struct Hospital {
     int siguienteIdCita;
     int siguienteIdConsulta;
 };
+// inicializacion
 Hospital* inicializarhospital(const char* nombre, const char* direccion, const char* telefono){
     Hospital* hospital= new Hospital;
     strncpy(hospital->nombre, nombre, 100);
@@ -185,6 +187,7 @@ Hospital* inicializarhospital(const char* nombre, const char* direccion, const c
     return hospital;
 
 }
+// pacientes
 void redimensionararregloPacientes(Hospital* hospital){
     int nuevaCapacidad = hospital->capacidadPacientes * 2;
     Paciente* nuevoarr = new Paciente[nuevaCapacidad];
@@ -196,6 +199,24 @@ void redimensionararregloPacientes(Hospital* hospital){
     delete[] hospital->pacientes;
     hospital->pacientes = nuevoarr;
     hospital->cantidadPacientes = nuevaCapacidad;
+}
+Paciente* buscarPacientePorCedula(Hospital* hospital, const char* cedula){
+    for(int i=0; i< hospital->cantidadPacientes; i++){
+        if (strcasecmp(hospital->pacientes[i].cedula, cedula)== 0){
+            return &hospital->pacientes[i];
+
+        }
+    }
+    return nullptr;
+}
+
+Paciente* buscarPacientePorId(Hospital* hospital, int id){
+    for(int i =0; i<hospital->cantidadPacientes; i++){
+        if(hospital->pacientes[i].id == id){
+            return &hospital->pacientes[i];
+        }
+    }
+    return nullptr;
 }
 
 Paciente* crearPaciente(Hospital* hospital, const char* nombre, const char* apellido, const char* cedula, int edad, char sexo ){
@@ -238,6 +259,37 @@ nuevo.citasAgendadas = new int[nuevo.capacidadCitas];
 hospital->cantidadPacientes++;
 
 return &nuevo;
+
+Paciente** buscarPacientePorNombre(Hospital* hospital, const char* nombre, const char* cantidad);
+int contador =0;
+for(int i=0; i< hospital->cantidadPacientes; i++){
+    if(strcasestr(hospital->pacientes[i].nombre, nombre)){
+        contador++;
+    }
+}
+if(contador ==0){
+    *cantidad = 0;
+    return nullptr;
+}
+Paciente** resultados = new Paciente*[contador];
+int index=0;
+for(int i =0; i< hospital->cantidadPacientes; i++){
+    if(strcasestr(hospital->pacientes[i].nombre, nombre)){
+        resultados[index++] = &hospital->pacientes[i];
+    }
+}
+*cantidad = contador;
+return resultados;
+
+
+//Doctores
+
+Doctor* crearDoctor(Hospital* hospital, const char* nombre, const char* apellido, const char* cedula, const char* especialidad, int aniosdexperiencia, float costoconsulta){
+    //verificamos que la cedula no este repetida
+    for(int i=0; i< hospital->cantidadDoctores; i++){
+        if()
+    }
+}
 
 
 int main(){
