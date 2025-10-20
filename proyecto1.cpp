@@ -155,6 +155,36 @@ struct Hospital {
     int siguienteIdCita;
     int siguienteIdConsulta;
 };
+Hospital* inicializarhospital(const char* nombre, const char* direccion, const char* telefono){
+    Hospital* hospital= new Hospital;
+    strncpy(hospital->nombre, nombre, 100);
+    strncpy(hospital->direccion, direccion, 150);
+    strncpy(hospital->telefono, telefono, 50);
+
+    hospital->capacidadPacientes = 10;
+    hospital->cantidadPacientes = 0;
+    hospital->pacientes = new Paciente[hospital->capacidadPacientes];
+
+    hospital->cantidadDoctores = 10;
+    hospital->cantidadDoctores = 0;
+    hospital->doctores = new Doctor[hospital->capacidadDoctores];
+
+    hospital->capacidadCitas = 10;
+    hospital->cantidadCitas = 0;
+    hospital->citas = new Cita[hospital->capacidadCitas];
+
+    hospital->siguienteIdPaciente= 1;
+    hospital->siguienteIdDoctor= 1;
+    hospital->siguienteIdCita= 1;
+    hospital->siguienteIdConsulta= 1;
+
+    return hospital;
+
+
+
+
+
+}
 
 int main(){
  int opcionpacientesw=0;
