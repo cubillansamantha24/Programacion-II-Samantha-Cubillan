@@ -263,7 +263,7 @@ return &nuevo;
 Paciente** buscarPacientePorNombre(Hospital* hospital, const char* nombre, const char* cantidad);
 int contador =0;
 for(int i=0; i< hospital->cantidadPacientes; i++){
-    if(strcasestr(hospital->pacientes[i].nombre, nombre)){
+    if(strstr(hospital->pacientes[i].nombre, nombre)){
         contador++;
     }
 }
@@ -274,12 +274,36 @@ if(contador ==0){
 Paciente** resultados = new Paciente*[contador];
 int index=0;
 for(int i =0; i< hospital->cantidadPacientes; i++){
-    if(strcasestr(hospital->pacientes[i].nombre, nombre)){
+    if(strstr(hospital->pacientes[i].nombre, nombre)){
         resultados[index++] = &hospital->pacientes[i];
     }
 }
 *cantidad = contador;
 return resultados;
+
+void mostrarHistorialMedico(Paciente* paciente) {
+    if(paciente->cantidadConsultas == 0) {
+        cout<< " Este paciente no tiene consultas previamente registradas.\n";
+        return;
+}
+cout<< ".\n======HISTORIAL MEDICO DE "<< paciente->nombre<< "" << paciente->apellido<< "=====.\n"
+cout<< left << setw(12) << "Fecha"<<
+<< setw(8)<<"Hora"
+<< setw(20)<< "Doctor ID"
+<< setw(30)<< "Diagnostico"
+<<setw(10) <<"Costo"<< endl;
+cout<< string(90, "-") << endl;
+ 
+for(int i== 0; i< paciente->cantidadConsultas; i++){
+    HistorialMedico& = paciente->historial[i];
+    cout<< left <<setw(12)<< h.fecha
+    <<setw(8)<< h.hora
+    <<setw(20)<< h.idDoctor
+    <<setw(30)<< h.diagnostico
+    <<setw(10)<< h.costo<< endl;
+    
+}
+}
 
 
 //Doctores
