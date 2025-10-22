@@ -2,7 +2,7 @@
 #include <cstring>
 #include <iomanip>
 using namespace std;
-
+//revisar bien tipos de datos para q en cedula no me acepte letras y en numero tlf y demas variables
 // Estructuras
 struct HistorialMedico {
     int idConsulta;
@@ -116,14 +116,6 @@ hospital->citas = new Cita[hospital->capacidadCitas];
 }
 // FUNCIONES PACIENTES
 // Crear paciente
-Paciente* crearPaciente(Hospital* hospital, const char* nombre, const char* apellido, const char* cedula, nt edad, char sexo,const char* tipoSangre, const char* telefono, const char* direccion, onst char* email, const char* alergias, const char* observaciones){
-	//Para no registrar una cedula ya existente
-    for (int i = 0; i < hospital->cantidadPacientes; i++) {
-        if (strcmp(hospital->pacientes[i].cedula, cedula) == 0) {
-            cout << "Error: Cédula ya registrada.\n";
-            return nullptr;
-        }
-    }
 // Buscar paciente por ID
 Paciente* buscarPacientePorId(Hospital* hospital, int id) {
     for (int i = 0; i < hospital->cantidadPacientes; i++) {
@@ -195,7 +187,16 @@ if (hospital->cantidadPacientes >= hospital->capacidadPacientes) {
     hospital->cantidadPacientes++;
     return &nuevo;
  
-}
+
+Paciente* crearPaciente(Hospital* hospital, const char* nombre, const char* apellido, const char* cedula, nt edad, char sexo,const char* tipoSangre, const char* telefono, const char* direccion, onst char* email, const char* alergias, const char* observaciones){
+	//Para no registrar una cedula ya existente
+    for (int i = 0; i < hospital->cantidadPacientes; i++) {
+        if (strcmp(hospital->pacientes[i].cedula, cedula) == 0) {
+            cout << "Error: Cédula ya registrada.\n";
+            return nullptr;
+        }
+    }
+
 // Actualizar paciente
 bool actualizarPaciente(Hospital* hospital, int id) {
     Paciente* p = buscarPacientePorId(hospital, id);
@@ -225,7 +226,7 @@ void listarPacientes(Hospital* hospital) {
          << setw(6) << "Edad"
          << setw(10) << "Consultas" << "\n";
 
-    cout << string(66, '-') << "\n"; // Línea divisoria
+    cout << string(66, '-') << "\n";
 
     for (int i = 0; i < hospital->cantidadPacientes; i++) {
         Paciente& p = hospital->pacientes[i];
@@ -237,6 +238,7 @@ void listarPacientes(Hospital* hospital) {
              << setw(10) << p.cantidadConsultas << "\n";
     }
 }
+//Al ejecutar en vez de que el numero de id me sirva para un nuevo user, me salta al siguiente id, borro id 2 creo uno nuevo y en vez de guardar en 2, se guarda en id 3 
 bool eliminarPaciente(Hospital* h, int id) {
     for (int i = 0; i < h->cantidadPacientes; i++) {
         if (h->pacientes[i].id == id) {
@@ -264,7 +266,7 @@ bool eliminarPaciente(Hospital* h, int id) {
                 }
             }
 
-            // Compactar arreglo
+            
             for (int k = i; k < h->cantidadPacientes - 1; k++) {
                 h->pacientes[k] = h->pacientes[k + 1];
             }
@@ -311,7 +313,7 @@ bool agregarHistorialMedico(Paciente* paciente, const char* fecha, const char* h
     h.costoConsulta = costo;
 
     paciente->cantidadHistorial++;
-    paciente->cantidadConsultas++; // opcional
+    paciente->cantidadConsultas++; 
 
     return true;
 }
@@ -379,23 +381,8 @@ Doctor* crearDoctor(Hospital* hospital, const char* nombre, const char* apellido
     return &d;
 }
 
-//Buscar doctor por id
-Doctor* buscarDoctorPorId(Hospital* hospital, int id) {
-    for (int i = 0; i < hospital->cantidadDoctores; i++) {
-        if (hospital->doctores[i].id == id) return &hospital->doctores[i];
-    }
-    return nullptr;
-}
-//buscar doctores por especialidad
-void buscarDoctoresPorEspecialidad(Hospital* hospital, const char* especialidad) {
-    cout << "\nDoctores con especialidad en " << especialidad << ":\n";
-    for (int i = 0; i < hospital->cantidadDoctores; i++) {
-        Doctor& d = hospital->doctores[i];
-        if (strcmp(d.especialidad, especialidad) == 0) {
-            cout << "ID: " << d.id << " - " << d.nombre << " " << d.apellido << "\n";
-        }
-    }
-}
+
+
 //Asignar Paciente a doctor
 bool asignarPacienteADoctor(Doctor* doctor, int idPaciente) {
     if (doctor->cantidadPacientes >= doctor->capacidadPacientes) {
@@ -459,4 +446,558 @@ bool eliminarDoctor(Hospital* hospital, int id) {
     }
     return false;
 }
-//
+//FUNCIONES CITAS
+bool agendarCita(Hospital* hospital, int idPaciente, int idDoctor, const char* fecha, const char* hora, const char* motivo) {
+    if (hospital->cantidadCitas >= hospital->capacidadCitas) {
+        int nuevaCapacidad = hospital->capacidadCitas * 2;
+        Cita* nuevoArray = new Cita[nuevaCapacidad];
+        for (int i = 0; i < hospital->cantidadCitas; i++) {
+            nuevoArray[i] = hospital->citas[i];
+        }
+        delete[] hospital->citas;
+        hospital->citas = nuevoArray;
+        hospital->capacidadCitas = nuevaCapacidad;
+    }
+
+    Cita& c = hospital->citas[hospital->cantidadCitas];
+    c.id = hospital->siguienteIdCita++;
+    c.idPaciente = idPaciente;
+    c.idDoctor = idDoctor;
+    strncpy(c.fecha, fecha, 10); c.fecha[10] = '\0';
+    strncpy(c.hora, hora, 5); c.hora[5] = '\0';
+    strncpy(c.motivo, motivo, 149); c.motivo[149] = '\0';
+    strcpy(c.estado, "Pendiente");
+    strcpy(c.observaciones, "");
+    c.atendida = false;
+
+    hospital->cantidadCitas++;
+    return true;
+}
+//Cancelar cita
+bool cancelarCita(Hospital* hospital, int idCita) {
+    for (int i = 0; i < hospital->cantidadCitas; i++) {
+        if (hospital->citas[i].id == idCita && !hospital->citas[i].atendida) {
+            strcpy(hospital->citas[i].estado, "Cancelada");
+            hospital->citas[i].atendida = false;
+            return true;
+        }
+    }
+    return false;
+}
+
+void verCitasDePaciente(Hospital* hospital, int idPaciente) {
+    cout << "\nCitas del paciente:\n";
+    for (int i = 0; i < hospital->cantidadCitas; i++) {
+        if (hospital->citas[i].idPaciente == idPaciente) {
+            Cita& c = hospital->citas[i];
+            cout << "ID: " << c.id << " | Fecha: " << c.fecha << " " << c.hora
+                 << " | Motivo: " << c.motivo << " | Estado: " << c.estado << "\n";
+        }
+    }
+}
+void verCitasDeDoctor(Hospital* hospital, int idDoctor) {
+    cout << "\nCitas del doctor:\n";
+    for (int i = 0; i < hospital->cantidadCitas; i++) {
+        if (hospital->citas[i].idDoctor == idDoctor) {
+            Cita& c = hospital->citas[i];
+            cout << "ID: " << c.id << " | Fecha: " << c.fecha << " " << c.hora
+                 << " | Motivo: " << c.motivo << " | Estado: " << c.estado << "\n";
+        }
+    }
+}
+void verCitasPorFecha(Hospital* hospital, const char* fecha) {
+    cout << "\nCitas para la fecha " << fecha << ":\n";
+    for (int i = 0; i < hospital->cantidadCitas; i++) {
+        if (strcmp(hospital->citas[i].fecha, fecha) == 0) {
+            Cita& c = hospital->citas[i];
+            cout << "ID: " << c.id << " | Hora: " << c.hora
+                 << " | Motivo: " << c.motivo << " | Estado: " << c.estado << "\n";
+        }
+    }
+}
+void verCitasPendientes(Hospital* hospital) {
+    cout << "\nCitas pendientes:\n";
+    for (int i = 0; i < hospital->cantidadCitas; i++) {
+        if (strcmp(hospital->citas[i].estado, "Pendiente") == 0) {
+            Cita& c = hospital->citas[i];
+            cout << "ID: " << c.id << " | Fecha: " << c.fecha << " " << c.hora
+                 << " | Motivo: " << c.motivo << "\n";
+        }
+    }
+} //AQUIIIII
+bool atenderCita(Hospital* hospital, int idCita, const char* observaciones) {
+    for (int i = 0; i < hospital->cantidadCitas; i++) {
+        Cita& c = hospital->citas[i];
+
+        if (c.id == idCita && strcmp(c.estado, "Pendiente") == 0) {
+            // Marcar como atendida la ciat
+            strcpy(c.estado, "Atendida");
+            strncpy(c.observaciones, observaciones, 199);
+            c.observaciones[199] = '\0';
+            c.atendida = true;
+
+            // Buscar paciente y doctor
+            Paciente* p = buscarPacientePorId(hospital, c.idPaciente);
+            Doctor* d = buscarDoctorPorId(hospital, c.idDoctor);
+
+            if (p && d) {
+                agregarHistorialMedico(p, c.fecha, c.hora, c.motivo, "Tratamiento aplicado", "Medicamentos recetados", d->id, d->costoConsulta);
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+
+
+// Limpieza de memoria dinamica
+void destruirHospital(Hospital* hospital) {
+    for (int i = 0; i < hospital->cantidadPacientes; i++) {
+        delete[] hospital->pacientes[i].historial;
+        delete[] hospital->pacientes[i].citasAgendadas;
+   
+
+       
+    }
+    for (int i = 0; i < hospital->cantidadDoctores; i++) {
+    delete[] hospital->doctores[i].pacientesAsignados;
+    delete[] hospital->doctores[i].citasAgendadas;
+}
+delete[] hospital->doctores;
+
+
+    delete[] hospital->pacientes;
+    delete[] hospital->doctores;
+    delete hospital;
+}
+
+// Menú principal
+int main() {
+    Hospital* hospital = inicializarHospital("Hospital Universitario", "Av. Guajira", "+58 261752315");
+    int opcion = 0;
+
+    while (opcion != 4) {
+        cout << "\n--- MENÚ PRINCIPAL ---\n";
+        cout << "1. Gestión de Pacientes\n";
+        cout << "2. Gestión de Doctores \n";
+        cout << "3. Gestión de Citas \n";
+        cout << "4. Salir\n";
+        cout << "Seleccione una opción: ";
+        cin >> opcion;
+
+        switch (opcion) {
+            case 1: {
+                int subopcion = -1;
+                while (subopcion != 0) {
+                    cout << "\n--- Gestión de Pacientes ---\n";
+                    cout << "1. Registrar nuevo paciente\n";
+                    cout << "2. Buscar paciente por ID\n";
+                    cout << "3. Actualizar datos del paciente\n";
+                    cout << "4. Listar todos los pacientes\n";
+                    cout << "5. Eliminar paciente\n";
+                    cout << "6. Buscar paciente por cédula\n";
+                    cout << "7. Agregar historial médico\n";
+                    cout << "8. Ver historial médico\n";
+                    cout << "9. Buscar paciente por nombre\n";
+
+                    cout << "0. Volver al menú principal\n";
+                    cout << "Seleccione una opción: ";
+                    cin >> subopcion;
+
+                    switch (subopcion) {
+                        case 1: {
+                            char nombre[50], apellido[50], cedula[20];int edad;char sexo;char tipoSangre[5], telefono[15], direccion[100], email[50];char alergias[500], observaciones[500];
+                            cin.ignore();
+                            cout << "Nombre: "; cin.getline(nombre, 50);
+                            cout << "Apellido: "; cin.getline(apellido, 50);
+                            cout << "Cédula: "; cin.getline(cedula, 20);
+                            if (cedulaExiste(hospital, cedula)) {
+                            cout << "Ya existe un paciente registrado con esa cédula.\n";
+                            break;                             }
+                            cout << "Edad: "; cin >> edad;
+                            cout << "Sexo (M/F): "; cin >> sexo;
+                            cin.ignore();
+                            cout<<"Alergias: " ;cin.getline(alergias, 500);
+                            cout<<"Tipo de Sangre: " ;cin.getline(tipoSangre, 5);
+                            cout<<"Telefono: " ;cin.getline(telefono, 15);
+                            cout<<"Direccion: " ;cin.getline(direccion, 100);
+                            cout<<"Email: " ;cin.getline(email, 50);
+                            cout<<"observaciones: " ;cin.getline(observaciones, 500);
+                            cin.ignore();
+                            Paciente* nuevo = crearPaciente(hospital, nombre, apellido, cedula, edad, sexo, tipoSangre, telefono, direccion, email, alergias, observaciones);
+                            if (nuevo) {
+                            cout << "Paciente registrado con ID: " << nuevo->id << "\n";
+                            }
+                              break;
+                            }
+
+                        case 2: {
+                        int id;
+                        cout << "Ingrese el ID del paciente: ";
+                        cin >> id;
+                        Paciente* p = buscarPacientePorId(hospital, id);
+                        if (p) {
+                            cout << "\nPaciente encontrado:\n";
+                             cout << "Nombre: " << p->nombre << " " << p->apellido << "\n";
+                             cout << "Cédula: " << p->cedula << "\n";
+                             cout << "Edad: " << p->edad << "\n";
+                             cout << "Sexo: " << p->sexo << "\n";
+                             cout << "Tipo de sangre: " << p->tipoSangre << "\n";
+                             cout << "Teléfono: " << p->telefono << "\n";
+                             cout << "Email: " << p->email << "\n";
+                             cout << "Consultas registradas: " << p->cantidadConsultas << "\n";
+                            } else {
+                                cout << "Paciente no encontrado.\n";
+                            }
+                            break;
+                        }
+                        case 3: {
+                            int id;
+                            cout << "Ingrese el ID del paciente a actualizar: ";
+                            cin >> id;
+                            if (actualizarPaciente(hospital, id)) {
+                                cout << "Datos actualizados correctamente.\n";
+                            } else {
+                                cout << "No se pudo actualizar el paciente.\n";
+                            }
+                            break;
+                        }
+                        case 4:
+                            listarPacientes(hospital);
+                            break;
+
+                        case 5: {
+                            int id;
+                            cout << "Ingrese el ID del paciente a eliminar: ";
+                            cin >> id;
+                            if (eliminarPaciente(hospital, id)) {
+                                cout << "Paciente eliminado correctamente.\n";
+                            } else {
+                                cout << "No se pudo eliminar el paciente.\n";
+                            }
+                            break;
+                        }
+                        case 6: {
+                        char cedulaBuscada[20];
+                        cin.ignore();
+                        cout << "Ingrese la cédula del paciente: ";
+                        cin.getline(cedulaBuscada, 20);
+
+                        Paciente* p = buscarPacientePorCedula(hospital, cedulaBuscada);
+                        if (p) {
+                            cout << "\nPaciente encontrado:\n";
+                            cout << "ID: " << p->id << "\n";
+                            cout << "Nombre: " << p->nombre << " " << p->apellido << "\n";
+                            cout << "Cédula: " << p->cedula << "\n";
+                            cout << "Edad: " << p->edad << "\n";
+                            cout << "Sexo: " << p->sexo << "\n";
+                            cout << "Tipo de sangre: " << p->tipoSangre << "\n";
+                            cout << "Teléfono: " << p->telefono << "\n";
+                            cout << "Dirección: " << p->direccion << "\n";
+                            cout << "Email: " << p->email << "\n";
+                            cout << "Alergias: " << p->alergias << "\n";
+                            cout << "Observaciones: " << p->observaciones << "\n";
+                            cout << "Consultas registradas: " << p->cantidadConsultas << "\n";
+                        } else {
+                            cout << "Paciente no encontrado.\n";
+                        }
+                        break;
+                    }
+                        case 7: {
+
+                            int id;
+                            cout << "\nIngrese el ID del paciente: ";
+                            cin >> id;
+                            Paciente* p = buscarPacientePorId(hospital, id);
+                            if (!p) {
+                                cout << "Paciente no encontrado.\n";
+                                break;
+                            }
+
+                            // Variables de entrada
+                            char fecha[11], hora[6], diagnostico[200], tratamiento[200], medicamentos[150];
+                            int idDoctor;
+                            float costo;
+
+                            cin.ignore(); 
+
+                            cout << "\n--- Registro de Historial Médico ---\n";
+
+                            cout << "Fecha (YYYY-MM-DD): ";
+                            cin.getline(fecha, 11);
+                            cout << "? Fecha ingresada: " << fecha << "\n";
+
+                            cout << "Hora (HH:MM): ";
+                            cin.getline(hora, 6);
+                            cout << "? Hora ingresada: " << hora << "\n";
+
+                            cout << "Diagnóstico (máx 199 caracteres): ";
+                            cin.getline(diagnostico, 199);
+                            cout << "? Diagnóstico ingresado: " << diagnostico << "\n";
+
+                            cout << "Tratamiento (máx 199 caracteres): ";
+                            cin.getline(tratamiento, 199);
+                            cout << "? Tratamiento ingresado: " << tratamiento << "\n";
+
+                            cout << "Medicamentos recetados (máx 149 caracteres): ";
+                            cin.getline(medicamentos, 149);
+                            cout << "? Medicamentos ingresados: " << medicamentos << "\n";
+
+                            cout << "ID del doctor que atendió: ";
+                            cin >> idDoctor;
+                            cout << "? ID doctor: " << idDoctor << "\n";
+
+                            cout << "Costo de la consulta: ";
+                            cin >> costo;
+                            cout << "? Costo ingresado: $" << costo << "\n";
+
+                            
+                            cout << "\nGuardando historial médico...\n";
+
+                            bool exito = agregarHistorialMedico(p, fecha, hora, diagnostico, tratamiento, medicamentos, idDoctor, costo);
+                            if (exito) {
+                                cout << "? Historial médico agregado correctamente.\n";
+                            } else {
+                                cout << "? No se pudo agregar el historial (posible error de memoria).\n";
+                            }
+
+                            break;
+                        }
+
+                        case 8: {
+                            int id;
+                            cout << "Ingrese el ID del paciente: ";
+                            cin >> id;
+                            Paciente* p = buscarPacientePorId(hospital, id);
+                            if (!p) {
+                                cout << "Paciente no encontrado.\n";
+                                break;
+                            }
+
+                            mostrarHistorialMedico(p);
+                            break;
+                        }
+                        case 9: {
+                            char nombreBuscado[50];
+                            cin.ignore();
+                            cout << "Ingrese el nombre o parte del nombre a buscar: ";
+                            cin.getline(nombreBuscado, 50);
+                            buscarPacientesPorNombre(hospital, nombreBuscado);
+                            break;
+                        }
+
+
+
+
+                        case 0:
+                            cout << "Volviendo al menú principal...\n";
+                            break;
+
+                        default:
+                            cout << "Opción inválida. Intente nuevamente.\n";
+                            
+                    }
+                }
+                break;
+        }
+
+           case 2: {
+    int opcionDoctor = -1;
+    while (opcionDoctor != 8) {
+        cout << "\n--- Menú de Doctores ---\n";
+        cout << "1. Registrar nuevo doctor\n";
+        cout << "2. Buscar doctor por ID\n";
+        cout << "3. Buscar doctores por especialidad\n";
+        cout << "4. Asignar paciente a doctor\n";
+        cout << "5. Ver pacientes asignados a doctor\n";
+        cout << "6. Listar todos los doctores\n";
+        cout << "7. Eliminar doctor\n";
+        cout << "8. Volver al menú principal\n";
+        cout << "Seleccione una opción: ";
+        cin >> opcionDoctor;
+
+        switch (opcionDoctor) {
+            case 1: {
+                char nombre[50], apellido[50], cedula[20], especialidad[50], horario[50], telefono[15], email[50];
+                int experiencia;
+                float costo;
+
+                cin.ignore();
+                cout << "Nombre: "; cin.getline(nombre, 50);
+                cout << "Apellido: "; cin.getline(apellido, 50);
+                cout << "Cédula: "; cin.getline(cedula, 20);
+                cout << "Especialidad: "; cin.getline(especialidad, 50);
+                cout << "Años de experiencia: "; cin >> experiencia;
+                cout << "Costo de consulta: "; cin >> costo;
+                cin.ignore();
+                cout << "Horario de atención: "; cin.getline(horario, 50);
+                cout << "Teléfono: "; cin.getline(telefono, 15);
+                cout << "Email: "; cin.getline(email, 50);
+
+                Doctor* d = crearDoctor(hospital, nombre, apellido, cedula, especialidad, experiencia, costo, horario, telefono, email);
+                if (d) {
+                    cout << "? Doctor registrado con ID: " << d->id << "\n";
+                } else {
+                    cout << "? No se pudo registrar el doctor.\n";
+                }
+                break;
+            }
+
+            case 2: {
+                //falta
+
+            case 3: // falta
+
+            case 4: {
+                int idDoctor, idPaciente;
+                cout << "ID del doctor: "; cin >> idDoctor;
+                cout << "ID del paciente a asignar: "; cin >> idPaciente;
+
+                Doctor* d = buscarDoctorPorId(hospital, idDoctor);
+                Paciente* p = buscarPacientePorId(hospital, idPaciente);
+
+                if (!d || !p) {
+                    cout << "? Doctor o paciente no encontrado.\n";
+                    break;
+                }
+
+                if (asignarPacienteADoctor(d, idPaciente)) {
+                    cout << "? Paciente asignado correctamente.\n";
+                } else {
+                    cout << "? No se pudo asignar el paciente.\n";
+                }
+                break;
+            }
+
+            case 5: {
+                //ver como hacer esta partecitaaaa
+
+            case 6: {
+                listarDoctores(hospital);
+                break;
+            }
+
+            case 7: {
+                int id;
+                //pendiente
+            }
+
+            case 8:
+                cout << "Volviendo al menú principal...\n";
+                break;
+
+            default:
+                cout << "? Opción inválida. Intente nuevamente.\n";
+        }
+    }
+    break;
+}
+
+case 3: {
+    int opcionCita = 0;
+    do {
+        cout << "\n--- Menú de Citas ---\n";
+        cout << "1. Agendar nueva cita\n";
+        cout << "2. Cancelar cita\n";
+        cout << "3. Atender cita\n";
+        cout << "4. Ver citas de un paciente\n";
+        cout << "5. Ver citas de un doctor\n";
+        cout << "6. Ver citas de una fecha\n";
+        cout << "7. Ver citas pendientes\n";
+        cout << "8. Volver al menú principal\n";
+        cout << "Seleccione una opción: ";
+        cin >> opcionCita;
+        cin.ignore();
+
+        switch (opcionCita) {
+            case 1: {
+                int idPaciente, idDoctor;
+                char fecha[11], hora[6], motivo[150];
+                cout << "ID del paciente: "; cin >> idPaciente;
+                cout << "ID del doctor: "; cin >> idDoctor;
+                cin.ignore();
+                cout << "Fecha (YYYY-MM-DD): "; cin.getline(fecha, 11);
+                cout << "Hora (HH:MM): "; cin.getline(hora, 6);
+                cout << "Motivo: "; cin.getline(motivo, 150);
+
+                if (horarioOcupado(hospital, idDoctor, fecha, hora)) {
+                    cout << "? El doctor ya tiene una cita pendiente en ese horario.\n";
+                } else {
+                    if (agendarCita(hospital, idPaciente, idDoctor, fecha, hora, motivo)) {
+                        int nuevoId = hospital->siguienteIdCita - 1;
+                        cout << "? Cita agendada correctamente. ID: " << nuevoId << "\n";
+                    } else {
+                        cout << "? No se pudo agendar la cita.\n";
+                    }
+                }
+                break;
+            }
+
+            case 2: {
+                //pendiente :(
+            }
+            //GRAN PROBLEMAAAA 911 AYUSAAAA
+            case 3: {
+                int idCita;
+                char observaciones[200];
+                cout << "ID de la cita a atender: ";
+                cin >> idCita;
+                cin.ignore();
+                cout << "Observaciones: ";
+                cin.getline(observaciones, 200);
+
+                if (atenderCita(hospital, idCita, observaciones))
+                    cout << "? Cita atendida.\n";
+                else
+                    cout << "? No se pudo atender la cita.\n";
+                break;
+            }
+
+            case 4: {
+                int idPaciente;
+                cout << "ID del paciente: ";
+                cin >> idPaciente;
+                verCitasDePaciente(hospital, idPaciente);
+                break;
+            }
+
+            case 5: {
+                int idDoctor;
+                cout << "ID del doctor: ";
+                cin >> idDoctor;
+                verCitasDeDoctor(hospital, idDoctor);
+                break;
+            }
+
+            case 6: {
+               //pendiente
+            }
+
+            case 7: {
+                verCitasPendientes(hospital);
+                break;
+            }
+
+            case 8:
+                cout << "Volviendo al menú principal...\n";
+                break;
+
+            default:
+                cout << "? Opción inválida. Intente nuevamente.\n";
+        }
+    } while (opcionCita != 8);
+    break;
+}
+
+
+
+case 4:
+   //pendiente
+
+}
+
+
