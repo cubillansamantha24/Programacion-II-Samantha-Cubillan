@@ -350,7 +350,14 @@ void mostrarHistorialMedico(Paciente* paciente) {
         cout << "Costo: $" << h.costoConsulta << "\n";
     }
 }
-
+bool cedulaExisteDoctor(Hospital* hospital, const char* cedulaBuscada) {
+    for (int i = 0; i < hospital->cantidadDoctores; i++) {
+        if (strcmp(hospital->doctores[i].cedula, cedulaBuscada) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
 
 Doctor* crearDoctor(Hospital* hospital, const char* nombre, const char* apellido, const char* cedula,
                     const char* especialidad, int experiencia, float costo,
@@ -999,13 +1006,22 @@ int main() {
                 cout << "Nombre: "; cin.getline(nombre, 50);
                 cout << "Apellido: "; cin.getline(apellido, 50);
                 cout << "Cédula: "; cin.getline(cedula, 20);
+                if (cedulaExisteDoctor(hospital, cedula)) {
+    			cout << "Ya existe un doctor registrado con esa cédula.\n";
+    			break; 
+				}
                 cout << "Especialidad: "; cin.getline(especialidad, 50);
                 cout << "Años de experiencia: "; cin >> experiencia;
                 cout << "Costo de consulta: "; cin >> costo;
                 cin.ignore();
                 cout << "Horario de atención: "; cin.getline(horario, 50);
                 cout << "Teléfono: "; cin.getline(telefono, 15);
-                cout << "Email: "; cin.getline(email, 50);
+                do{
+                    cout<<"Email: " ;cin.getline(email, 50);
+                      if (!validarEmail(email)) {
+                      cout << "? Email inválido. Intente de nuevo.\n";
+       				 }
+    				} while (!validarEmail(email));
 
                 Doctor* d = crearDoctor(hospital, nombre, apellido, cedula, especialidad, experiencia, costo, horario, telefono, email);
                 if (d) {
