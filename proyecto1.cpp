@@ -1,5 +1,5 @@
 #include <iostream>
-#include <cstring>
+#include <cstring>//manipular cadenas de tipo char
 #include <iomanip>
 #include <locale.h>
 using namespace std;
@@ -79,12 +79,12 @@ struct Hospital {
     Paciente* pacientes;//para arreglo dinamico que guarde a los pacientes que se registren, apunta a la estructura pacientes
     int cantidadPacientes;
     int capacidadPacientes;
-    int siguienteIdPaciente;//asigna los ids, y aumenta automaticamente
-    int siguienteIdConsulta;//asigna los ids, y aumenta automaticamente
+    int siguienteIdPaciente;//asigna los ids, y aumenta automaticamente a medida que se registran
+    int siguienteIdConsulta;//asigna los ids, y aumenta automaticamente a medida que se registran
     Doctor* doctores;//mismo q pacientes pero doctores
     int cantidadDoctores;
     int capacidadDoctores;
-    int siguienteIdDoctor;//asigna los ids, y aumenta automaticamente
+    int siguienteIdDoctor;//asigna los ids, y aumenta automaticamente a medida que se registran
     Cita* citas;//mismo que pacientes pero cita
     int cantidadCitas;
     int capacidadCitas;
@@ -118,13 +118,13 @@ Hospital* inicializarHospital(const char* nombre, const char* direccion, const c
 }
 
 // Buscar paciente por ID
-Paciente* buscarPacientePorId(Hospital* hospital, int id) {
+Paciente* buscarPacientePorId(Hospital* hospital, int id) {//Paciente* porque va retornar un puntero, es decir la direccion del paciente que busco (apunta hacia el paciente verdadero guardado en el hospital)
     for (int i = 0; i < hospital->cantidadPacientes; i++) {
         if (hospital->pacientes[i].id == id) {
-            return &hospital->pacientes[i];
-        }
+            return &hospital->pacientes[i];//direccion de memoria del paciente 
     }
     return nullptr;
+}
 }
 Paciente* buscarPacientePorCedula(Hospital* hospital, const char* cedulaBuscada) {
     for (int i = 0; i < hospital->cantidadPacientes; i++) {
@@ -152,12 +152,7 @@ Paciente* crearPaciente(Hospital* hospital, const char* nombre, const char* apel
                         const char* tipoSangre, const char* telefono, const char* direccion,
                         const char* email, const char* alergias, const char* observaciones){
 						
-    for (int i = 0; i < hospital->cantidadPacientes; i++) {
-        if (strcmp(hospital->pacientes[i].cedula, cedula) == 0) {
-            cout << "Error: Cédula ya registrada.\n";
-            return nullptr;
-        }
-    }
+  
 
     if (hospital->cantidadPacientes >= hospital->capacidadPacientes) {// redimensionar arreglo de pacientes
         int nuevaCapacidad = hospital->capacidadPacientes * 2;// lo redimensiona el doble
@@ -170,7 +165,7 @@ Paciente* crearPaciente(Hospital* hospital, const char* nombre, const char* apel
         hospital->capacidadPacientes = nuevaCapacidad;//igualo la capacidad inicial, para que la nueva capacidad sea mi punto de inicio
     }
 
-    Paciente& nuevo = hospital->pacientes[hospital->cantidadPacientes];//me va permitir registrar un nuevo paciente. Se crea una referencia al espacio donde se va guardar un nuevo paciente, que es el espacio libre en el arreglo de pacientes
+    Paciente& nuevo = hospital->pacientes[hospital->cantidadPacientes];//me va permitir registrar un nuevo paciente. Se crea una referencia al espacio donde se va guardar un nuevo paciente, que es el espacio libre en el arreglo de pacientes. 
     nuevo.id = hospital->siguienteIdPaciente++;
     strncpy(nuevo.nombre, nombre, 50);
     strncpy(nuevo.apellido, apellido, 50);
@@ -199,11 +194,10 @@ Paciente* crearPaciente(Hospital* hospital, const char* nombre, const char* apel
 
 // Actualizar paciente
 bool actualizarPaciente(Hospital* hospital, int id) {//bool para  ver si el paciente existe
-    Paciente* p = buscarPacientePorId(hospital, id);//usamos la funcion ya creada
-    if (!p) return false;//si nada coincide con p, el paciente no ha sido registrado previamente
-
+    Paciente* p = buscarPacientePorId(hospital, id);//usamos la funcion ya creada, se crea un puntero p que guarda la direccion del paciente encontrado con ese id    if (!p) return false;//si nada coincide con p, el paciente no ha sido registrado previamente
+if (!p) return false;//si nada coincide con p, el paciente no ha sido registrado previamentess
     cin.ignore();
-    cout << "Nombre actual: " << p->nombre << "\nNuevo nombre: "; cin.getline(p->nombre, 50);
+    cout << "Nombre actual: " << p->nombre << "\nNuevo nombre: "; cin.getline(p->nombre, 50);//edito directamente en la variable, strcpy toma la copia de una variable a otra
     cout << "Apellido actual: " << p->apellido << "\nNuevo apellido: "; cin.getline(p->apellido, 50);
     cout << "Edad actual: " << p->edad << "\nNueva edad: "; cin >> p->edad;
     cout << "Sexo actual: " << p->sexo << "\nNuevo sexo (M/F): "; cin >> p->sexo;
@@ -263,7 +257,7 @@ bool eliminarPaciente(Hospital* h, int id) {
             for (int j = 0; j < h->cantidadCitas; j++) {//verifica q l cita es del paciente q se va a eliminar
                 if (h->citas[j].idPaciente == id) {//va a ir iterando por las citas buscandi cual contiene el id del paciente
                     h->citas[j].idPaciente = -1;// si coinciden los id, se pone -1, q significa que no hay nada asignado
-                    strcpy(h->citas[j].estado, "Cancelada");
+                    strcpy(h->citas[j].estado, "Cancelada");//strcpy no pone limite de espacio
                 }
             }
 
@@ -598,54 +592,47 @@ bool atenderCita(Hospital* hospital, int idCita, const char* observaciones) {
 
     return false;
 }
-int mi_strcasecmp(const char*s1,const char*s2){
-
-    //esta funcion se necesita para buscar pacientes y doctores sin importar si esta escrito con mayuscula o minuscula
-while(*s1 && *s2){
-    char c1 = (*s1 >= 'A' && *s1 <= 'Z') ? *s1 + 32 : *s1;
-    char c2 = (*s2 >= 'A' && *s2 <= 'Z') ? *s2 + 32 : *s2;
-    if(c1 != c2) return c1 - c2;
-        s1++;
-        s2++;
-    }
-return *s1 - *s2;
-}
 
 //funcion para validar la fecha en YYYY-MM-DD
 
 bool validarFecha(const char* fecha){
     int anio, mes, dia;
-    if(strlen(fecha)!=10){
+    if(strlen(fecha)!=10){//strlen se utiliza para indicar que si la cadena es mas corta o mas larga que 10 digitos, no es valida
         return false;
     }
 //Para verificar el formato con guiones
-    if(fecha[4]!='-' || fecha[7]!='-') {
+    if(fecha[4]!='-' || fecha[7]!='-') {//verifica que los guiones esten en las posiciones correctas 
         return false;
     }
 //verificamos que el numero corresponda 
 for(int i=0; i<10;i++) {
     if (i==4 || i==7 ) 
 continue;//saltamos los guiones
-    if (fecha[i] < '0' || fecha[i]>'9') {
+    if (fecha[i] < '0' || fecha[i]>'9') {//verifica que solo se ingresen numeros en año mes y dia 
     return false;
       }
 }
 
 //extraemos año,mes y dia 
 
-anio =    (fecha[0]-'0')* 1000 +
+anio =    (fecha[0]-'0')* 1000 + // '0' por la tabla de ascii para que el programa tome el caracter (que tiene un valor numerico interno) como un numero (resta el valor de el caracter ej:2 que vale 50 con 0 que vale 48, el resultado es 2 )
          (fecha[1]-'0')* 100 +
          (fecha[2]-'0')* 10 +
          (fecha[3]-'0');
 mes =    (fecha[5]-'0')* 10 + (fecha[6]-'0');
 dia =    (fecha[8]-'0')* 10 + (fecha[9]- '0');
 
- return true;
-//validar rangos 
 
-    if ( anio < 1900 || anio > 2100) return false;
-    if (mes < 1 || mes > 12) return false;
-    if (dia < 1 || dia > 31) return false;
+
+    if ( anio < 1900 || anio > 2100){
+         return false;
+    }
+    if (mes < 1 || mes > 12) {
+        return false;
+    }
+    if (dia < 1 || dia > 31) {
+        return false;
+    }
 
 //verificar dias segun mes
 
@@ -654,7 +641,7 @@ if (mes == 4 || mes == 6 || mes == 9 || mes == 11) {
 
 
 } else if (mes==2) {
-    bool esBisiesto = (anio % 4 == 0 && anio % 100 != 0) || (anio% 400 == 0);
+    bool esBisiesto = (anio % 4 == 0 && anio % 100 != 0) || (anio% 400 == 0);//aplica la regla de que sii es anio bisiesto es divisible entre 4 y 400 pero no entre 100
         if (esBisiesto) {
             if (dia > 29) return false;
         } else {
@@ -689,12 +676,12 @@ bool validarHora(const char* hora) {
 
 //funcion para validar el email
 bool validarEmail(const char* email) {
-    if(email==nullptr|| strlen (email)==0){\
+    if(email==nullptr|| strlen (email)==0){//se asegura que no este vacio
         return false;
     }
     bool tienearroba=false;
     bool tienepunto=false;
-    for(int i=0;email[i]!='0';i++){
+    for(int i=0;email[i]!='0';i++){//recorre cada caracter del email hasta llegar al final
         if(email[i]=='@'){
             tienearroba=true;
         } else if(email[i]=='.' && tienearroba){
@@ -704,14 +691,6 @@ bool validarEmail(const char* email) {
     return tienearroba && tienepunto;
 }
 
-int compararFechas (const char* fecha1, const char* fecha2){
-    //asumiendo el formato de YYYY-MM-DD
-    for (int i=0; i<10; i++){
-        if (fecha1[i] < fecha2[i]) return -1;
-        if (fecha1[i] > fecha2[i]) return 1;
-    }
-    return 0; //son iguales
-}
 
 
 
@@ -728,7 +707,7 @@ void destruirHospital(Hospital* hospital) {
     delete[] hospital->doctores[i].pacientesAsignados;
     delete[] hospital->doctores[i].citasAgendadas;
 }
-delete[] hospital->doctores;
+
 
 
     delete[] hospital->pacientes;
@@ -741,7 +720,11 @@ delete[] hospital->doctores;
 int main() {
     setlocale(LC_ALL, "");
     Hospital* hospital = inicializarHospital("Hospital Universitario", "Av. Guajira", "+58 261752315");
+    cout << "Hospital creado: " << hospital->nombre << endl;
+    cout << "Dirección: " << hospital->direccion << endl;
+    cout << "Teléfono: " << hospital->telefono << endl;
     int opcion = 0;
+
 
     while (opcion != 4) {
         cout << "\n--- MENÚ PRINCIPAL ---\n";
@@ -895,7 +878,7 @@ int main() {
                     }
 
                     // Variables de entrada
-                    char fecha[11], hora[6], diagnostico[200], tratamiento[200], medicamentos[150];
+                    char fecha[10], hora[6], diagnostico[200], tratamiento[200], medicamentos[150];
                     int idDoctor;
                     float costo;
 
@@ -1162,7 +1145,7 @@ case 3: {
                     cout << "? El doctor ya tiene una cita pendiente en ese horario.\n";
                 } else {
                     if (agendarCita(hospital, idPaciente, idDoctor, fecha, hora, motivo)) {
-                        int nuevoId = hospital->siguienteIdCita - 1;
+                        int nuevoId = hospital->siguienteIdCita - 1;//el id de la cita que acabo de registrar es uno menos al del siguiente id disponible
                         cout << "? Cita agendada correctamente. ID: " << nuevoId << "\n";
                     } else {
                         cout << "? No se pudo agendar la cita.\n";
