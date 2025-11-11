@@ -96,7 +96,7 @@ struct Hospital {
 // Inicializar hospital
 Hospital* inicializarHospital(const char* nombre, const char* direccion, const char* telefono) {//funcion , tipo direccion de un hospital, Hospital* guarda direcciones de hospitales
     Hospital* hospital = new Hospital;//reserva espacio en memoria dinamica y se guarda su direccion en el puntero hospital
-    strncpy(hospital->nombre, nombre, 100);// strncpy se utiliza para evitar desbordamientos de memoria
+    strncpy(hospital->nombre, nombre, 100);// strncpy se utiliza para evitar desbordamientos de memoria 
     strncpy(hospital->direccion, direccion, 150);//se utiliza hospital minuscula para acceder pq ese es el nombre de la variable con la q trabajo. Es decir, accedo a direccion, nombre etc de un hospital en especifico (el que estoy trabajando). Hospital mayuscula es como algo general, la plantilla.
     strncpy(hospital->telefono, telefono, 15);
     hospital->capacidadPacientes = 10;
