@@ -2,7 +2,7 @@
 #include <fstream>
 #include <cstring>
 #include <ctime>
-#include <vector>
+#include <locale.h>
 
 using namespace std;
 
@@ -245,6 +245,7 @@ bool cedulaExiste(const char* cedulaBuscada) {
     archivo.close();
     return false;
 }
+
 
 
 
@@ -1658,7 +1659,7 @@ cout << "Ya existe un paciente registrado con esa cédula.\n";
 break;
 }
 // Si no existe, continúa con el registro
-registrarPaciente(cedula); // ? puedes pasar la cédula si tu función lo permite
+registrarPaciente(cedula); 
 break;
 }
 case 2: buscarPacientePorID(); break;
@@ -1679,8 +1680,8 @@ char cedula[20];
 cout << "Ingrese la cédula a buscar: ";
 cin.ignore();
 cin.getline(cedula, 20);
-Paciente p = buscarPacientePorCedula(cedula);
-if (p.id != -1) {
+Paciente p = buscarPacientePorCedula(cedula);//iguala p al paciente econtrado por la cedula
+if (p.id != -1) {//el id que devuelve es valido 
 cout << "Paciente encontrado: " << p.nombre << " " << p.apellido << endl;
 } else {
 cout << "No se encontró ningún paciente con esa cédula.\n";
@@ -1711,10 +1712,12 @@ void menuDoctores() {
         cin >> opcion;
 
         switch (opcion) {
-            case 1:
-                registrarDoctor();
-                break;
+          case 1: {
+         
 
+            registrarDoctor(); 
+            break;
+        }
             case 2: {
                 int id;
                 cout << "Ingrese ID del doctor: ";
@@ -1760,18 +1763,18 @@ void menuDoctores() {
                 break;
             }
        case 5: {
-    int id;
-    cout << "ID del doctor: ";
-    cin >> id;
-    Doctor d = buscarDoctorPorId(id);
-    if (d.id != 0) {
-        cout << "Doctor: " << d.nombre << " " << d.apellido << "\n";
-        mostrarPacientesDeDoctor(id);
-    } else {
-        cout << "Doctor no encontrado.\n";
-    }
-    break;
-}
+            int id;
+            cout << "ID del doctor: ";
+            cin >> id;
+            Doctor d = buscarDoctorPorId(id);
+            if (d.id != 0) {
+                cout << "Doctor: " << d.nombre << " " << d.apellido << "\n";
+                mostrarPacientesDeDoctor(id);
+            } else {
+                cout << "Doctor no encontrado.\n";
+            }
+            break;
+        }
 
 
 
@@ -1907,6 +1910,7 @@ void menuPrincipal(Hospital* hospital) {
 //INT MAIN
 
 int main() {
+    setlocale(LC_ALL, "");
     // Archivos que usará el sistema
     const char* archivos[] = {
         "hospital.bin", "pacientes.bin", "doctores.bin", "citas.bin", "historiales.bin"
@@ -1919,24 +1923,26 @@ int main() {
             inicializarArchivo(nombre);
         }
     }
-    if (!verificarArchivo("pacientes.bin")) {
-    inicializarArchivo("pacientes.bin");
-}
+ 
 
 
 
     // Cargar datos del hospital
-    Hospital* hospital = new Hospital;
+    Hospital* hospital = new Hospital;//para que persista en el sistema hasta hacerle delete
+    
     ifstream archivoHospital("hospital.bin", ios::binary);
+    
     if (archivoHospital.is_open()) {
         archivoHospital.read((char*)hospital, sizeof(Hospital));
         archivoHospital.close();
     } else {
-        std::cerr << "Error al cargar datos del hospital.\n";
+    cerr << "Error al cargar datos del hospital.\n";
         delete hospital;
         return 1;
     }
-
+    strcpy(hospital->nombre, "Hospital Central");
+    strcpy(hospital->direccion, "Av. Principal, Chiquinquirá");
+    strcpy(hospital->telefono, "0261-1234567");
     // Mostrar datos básicos del hospital
     cout << "\n=== BIENVENIDO AL SISTEMA HOSPITALARIO ===\n";
     cout << "Hospital: " << hospital->nombre << "\n";
