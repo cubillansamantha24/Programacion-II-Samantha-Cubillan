@@ -12,9 +12,7 @@ struct ArchivoHeader {
     int proximoID;
     int registrosActivos;
     int version;
-    
-   
-int ultimoId;
+    int ultimoId;
 
 };
 struct Asignacion {
@@ -207,12 +205,12 @@ bool horarioOcupado(int idDoctor, const char* fecha, const char* hora) {
     ifstream archivo("citas.bin", ios::binary);
     if (!archivo.is_open()) return false;
 
-    ArchivoHeader header;
-    archivo.read((char*)&header, sizeof(header));
+    ArchivoHeader header;//Tipo de dato ArchivoHeader que es la estructura que contiene datos del archivo como cantidad de registros y ultimo id
+    archivo.read((char*)&header, sizeof(ArchivoHeader));//lee el encabezado desde el archivo, todas sus propiedades
 
-    Cita c;
-    for (int i = 0; i < header.cantidadRegistros; i++) {
-        archivo.read((char*)&c, sizeof(Cita));
+    Cita c;//Estructura que representa una cita medica la c representa una cita
+    for (int i = 0; i < header.cantidadRegistros; i++) {//itera la cantidad de citas que hay en mi archivo citas, utilizando header accediendo a su propiedad cantidad de registros para el archivo citas porque es el archivo que esta abierto
+        archivo.read((char*)&c, sizeof(Cita));//va leyendo la cita de cada iteracion
         if (!c.atendida && strcmp(c.estado, "Pendiente") == 0 &&
             c.idDoctor == idDoctor &&
             strcmp(c.fecha, fecha) == 0 &&
@@ -227,25 +225,25 @@ bool horarioOcupado(int idDoctor, const char* fecha, const char* hora) {
 }
 //Verificacion para saber si la cedua existe
 bool cedulaExiste(const char* cedulaBuscada) {
-fstream archivo("pacientes.bin", ios::binary | ios::in);
-if (!archivo.is_open()) {
-cerr << "Error al abrir pacientes.bin\n";
-return false;
+    fstream archivo("pacientes.bin", ios::binary | ios::in);
+    if (!archivo.is_open()) {
+    cerr << "Error al abrir pacientes.bin\n";//cerr es como mi cout pero se utliza como una salidad de error estandar
+    return false;
 }
-ArchivoHeader header;
-archivo.read(reinterpret_cast<char*>(&header), sizeof(ArchivoHeader));
-Paciente paciente;
-for (int i = 0; i < header.cantidadRegistros; i++) {
-long posicion = sizeof(ArchivoHeader) + i * sizeof(Paciente);
-archivo.seekg(posicion);
-archivo.read(reinterpret_cast<char*>(&paciente), sizeof(Paciente));
-if (!paciente.eliminado && strcmp(paciente.cedula, cedulaBuscada) == 0) {
-archivo.close();
-return true;
+    ArchivoHeader header;
+    archivo.read(reinterpret_cast<char*>(&header), sizeof(ArchivoHeader));//lee todas propiedades del header de pacientes.bin
+    Paciente paciente;
+    for (int i = 0; i < header.cantidadRegistros; i++) {//itera la cantidad de pacientes que hay en el archivo guiandose del header
+    streampos posicion = sizeof(ArchivoHeader) + i * sizeof(Paciente);//sumo lo que ocupa el header a la multiplicacion del numero de iteracion en el que estoy por el tamanio de pacientes para poder leer el paciente que corresponde a esa iteracion
+    archivo.seekg(posicion);//mueve el puntero de lectura a la pocision calculada
+    archivo.read(reinterpret_cast<char*>(&paciente), sizeof(Paciente));//le el paciente de la posicion y lo guarda en la variable paciente
+    if (!paciente.eliminado && strcmp(paciente.cedula, cedulaBuscada) == 0) {
+    archivo.close();
+    return true;
+    }
 }
-}
-archivo.close();
-return false;
+    archivo.close();
+    return false;
 }
 
 
@@ -255,62 +253,50 @@ return false;
 //VERIFICACIONES DE ARCHIVO
 // === FUNCIONES DE ARCHIVO Y ACCESO ALEATORIO ===
 
-bool verificarArchivo(const char* nombreArchivo) {
-    ifstream archivo(nombreArchivo, ios::binary);
-    if (!archivo.is_open()) return false;
-
-    ArchivoHeader header;
-    archivo.read((char*)&header, sizeof(header));
-    archivo.close();
-
-    return header.version == 1;
-}
-bool verificarHeader(const char*nombreArchivo ) {
-    ifstream archivo( nombreArchivo ,ios::binary | ios::in);
-    if (!archivo.is_open()) {
-        return false;
-    }
-    ArchivoHeader header;
-    archivo.read(reinterpret_cast<char*>(&header), sizeof(ArchivoHeader));
-    archivo.close();
-    if (archivo.fail() || header.version != 1) {
-        
-        return false;
-    }
-    return true;
-}
-
 bool inicializarArchivo(const char* nombreArchivo) {
     ofstream archivo(nombreArchivo, ios::binary);
     if (!archivo.is_open()) return false;
 
-    ArchivoHeader header = {0, 1, 0, 1}; // versión 1
+    ArchivoHeader header = {0, 1, 0, 1}; // inicializa todos los campos de mi estructura ArchivoHeader Registros 0, proximoid 1, registros activos 0 y  versión 1
     archivo.write((char*)&header, sizeof(header));
     archivo.close();
     return true;
 }
 
-ArchivoHeader leerHeader(const char* nombreArchivo) {
-    ifstream archivo(nombreArchivo, ios::binary);
-    ArchivoHeader header = {};
-    if (!archivo.is_open()) return header;
+bool verificarArchivo(const char* nombreArchivo) {
+    ifstream archivo(nombreArchivo, ios::binary);//abro el archivo que desee en modo lectura 
+    if (!archivo.is_open()) return false;
 
-    archivo.read((char*)&header, sizeof(header));
+    ArchivoHeader header;
+    archivo.read((char*)&header, sizeof(ArchivoHeader));//lee el header del archivo
     archivo.close();
-    return header;
+
+    return header.version == 1;//compara la version iinicializada en 1 con 1, si coincide retorna, sino retorna false
+}
+
+
+
+ArchivoHeader leerHeader(const char* nombreArchivo) {//me devuele un dato de tipo ArchivoHeader
+    ifstream archivo(nombreArchivo, ios::binary);
+    ArchivoHeader header = {};//inicializa todos las propiedades del header en 0 
+    if (!archivo.is_open()) return header;// retorno header pq por ahora todos sus campos son 0
+
+    archivo.read((char*)&header, sizeof(ArchivoHeader));// si se abre el archivo leo el header
+    archivo.close();
+    return header;//retorna header pero ahora con los datos del header del archivo que lei 
 }
 
 bool actualizarHeader(const char* nombreArchivo, const ArchivoHeader& header) {
     fstream archivo(nombreArchivo, ios::binary | ios::in | ios::out);
     if (!archivo.is_open()) return false;
 
-    archivo.seekp(0);
-    archivo.write((char*)&header, sizeof(header));
+    archivo.seekp(0);//mueve el puntero de escritura al inicio del archivo
+    archivo.write((char*)&header, sizeof(ArchivoHeader));//escribo el nuevo header 
     archivo.close();
     return true;
 }
 
-long calcularPosicion(int indice, size_t tamRegistro) {
+streampos calcularPosicion(int indice, size_t tamRegistro) {// size_t tamRegistro tipo entero sin signo (es decir, no puede ser negativo). siempre que use sizeof devuelve un size_t
     return sizeof(ArchivoHeader) + indice * tamRegistro;
 }
 
@@ -319,15 +305,15 @@ int buscarIndicePorID(const char* nombreArchivo, int idBuscado, size_t tamRegist
     if (!archivo.is_open()) return -1;
 
     ArchivoHeader header;
-    archivo.read((char*)&header, sizeof(header));
+    archivo.read((char*)&header, sizeof(ArchivoHeader));
 
-    char* buffer = new char[tamRegistro];
-    for (int i = 0; i < header.cantidadRegistros; i++) {
-        archivo.read(buffer, tamRegistro);
+    char* buffer = new char[tamRegistro];//crea un bufer dinamico para leer cada registro completo, reserva un espacio de tamanio para cualquier estructura
+    for (int i = 0; i < header.cantidadRegistros; i++) {//recorre todos los registros del archivo
+        archivo.read(buffer, tamRegistro);//lee el registro actual el de esa iteracion,en buffer se guarda la info
         int id;
-        memcpy(&id, buffer, sizeof(int));
+        memcpy(&id, buffer, sizeof(int));//memcpy es una función de la biblioteca estándar de C++ que copia bloques de memoria de un lugar a otro, pasa los primeros 4 bytes del buffer (registro) al id
         bool eliminado;
-        memcpy(&eliminado, buffer + tamRegistro - sizeof(bool) - sizeof(time_t)*2, sizeof(bool));
+        memcpy(&eliminado, buffer + tamRegistro - sizeof(bool) - sizeof(time_t)*2, sizeof(bool));//Calcula la posición del campo eliminado dentro del registro.
         if (id == idBuscado && !eliminado) {
             delete[] buffer;
             archivo.close();
@@ -348,7 +334,7 @@ void mostrarHeader(const char* nombreArchivo) {
     cout << "Versión: " << header.version << "\n";
 }
 
-template<typename T>
+template<typename T>//template<typename T>: permite que la función trabaje con cualquier tipo de registro (Paciente, Doctor, Cita, etc.).
 bool agregarRegistro(const char* nombreArchivo, T& nuevo) {
     ArchivoHeader header = leerHeader(nombreArchivo);
 
@@ -379,8 +365,8 @@ bool actualizarRegistro(const char* nombreArchivo, const T& modificado) {
     fstream archivo(nombreArchivo, ios::binary | ios::in | ios::out);
     if (!archivo.is_open()) return false;
 
-    archivo.seekp(calcularPosicion(indice, sizeof(T)));
-    archivo.write((char*)&modificado, sizeof(T));
+    archivo.seekp(calcularPosicion(indice, sizeof(T)));//mueve el puntero de escritura hasta la posicion del registro que quiero modificar
+    archivo.write((char*)&modificado, sizeof(T));//escribe los datos modificados
     archivo.close();
     return true;
 }
@@ -393,32 +379,32 @@ bool eliminarRegistro(const char* nombreArchivo, int id) {
     fstream archivo(nombreArchivo, ios::binary | ios::in | ios::out);
     if (!archivo.is_open()) return false;
 
-    archivo.seekg(calcularPosicion(indice, sizeof(T)));
-    T registro;
-    archivo.read((char*)&registro, sizeof(T));
+    archivo.seekg(calcularPosicion(indice, sizeof(T)));//muevo mi puntero de lectura a la posicion del registro
+    T registro;//declaro la variable donde se va a guardar el registro que quiero eliminar
+    archivo.read((char*)&registro, sizeof(T));//lo leo y ahi se guarda 
 
     registro.eliminado = true;
     registro.fechaModificacion = time(nullptr);
 
-    archivo.seekp(calcularPosicion(indice, sizeof(T)));
-    archivo.write((char*)&registro, sizeof(T));
+    archivo.seekp(calcularPosicion(indice, sizeof(T)));//muebo mi puntero de escritura a la posicion del registro que elimine
+    archivo.write((char*)&registro, sizeof(T));//Escribe el registro modificado (con eliminado = true) sobre el anterior.
     archivo.close();
 
     ArchivoHeader header = leerHeader(nombreArchivo);
-    header.registrosActivos--;
+    header.registrosActivos--;//reduce el contador de registros activos
     return actualizarHeader(nombreArchivo, header);
 }
 
 template<typename T>
 void listarRegistrosActivos(const char* nombreArchivo) {
-    ifstream archivo(nombreArchivo, std::ios::binary);
+    ifstream archivo(nombreArchivo, ios::binary);
     if (!archivo.is_open()) {
         cerr << "No se pudo abrir el archivo.\n";
         return;
     }
 
     ArchivoHeader header;
-    archivo.read((char*)&header, sizeof(header));
+    archivo.read((char*)&header, sizeof(ArchivoHeader));
     T registro;
 
     for (int i = 0; i < header.cantidadRegistros; i++) {
@@ -454,7 +440,6 @@ cin.ignore();
 cout << "Nombre: "; cin.getline(p.nombre, 50);
 cout << "Apellido: "; cin.getline(p.apellido, 50);
 strncpy(p.cedula, cedulaInicial, 20);
-cin.ignore();
 cout << "Edad: "; cin >> p.edad;
 cout << "Sexo (M/F): "; cin >> p.sexo;
 cin.ignore();
@@ -485,7 +470,7 @@ Paciente leerPacientePorID(int id) {
 int indice = buscarIndicePorID("pacientes.bin", id, sizeof(Paciente));
 if (indice == -1) return {};
 ifstream archivo("pacientes.bin",ios::binary);
-archivo.seekg(calcularPosicion(indice, sizeof(Paciente)));
+archivo.seekg(calcularPosicion(indice, sizeof(Paciente)));//mueve el puntero de lectura hasta la posicion del paciente que le corresponde ese id
 Paciente p;
 archivo.read((char*)&p, sizeof(Paciente));
 archivo.close();
@@ -505,8 +490,8 @@ Paciente paciente;
 bool encontrado = false;
 cout << "\nPacientes que coinciden con \"" << fragmento << "\":\n";
 for (int i = 0; i < header.cantidadRegistros; i++) {
-long posicion = sizeof(ArchivoHeader) + i * sizeof(Paciente);
-archivo.seekg(posicion);
+streampos posicion = sizeof(ArchivoHeader) + i * sizeof(Paciente);
+archivo.seekg(posicion);//leo la posicion del paciente de esa iteracion
 archivo.read(reinterpret_cast<char*>(&paciente), sizeof(Paciente));
 if (!paciente.eliminado && strstr(paciente.nombre, fragmento) != nullptr) {
 cout << "ID: " << paciente.id << " | " << paciente.nombre << " " << paciente.apellido
@@ -525,7 +510,7 @@ void buscarPacientePorID() {
 int id;
 cout << "Ingrese ID del paciente: ";
 cin >> id;
-Paciente p = leerPacientePorID(id);
+Paciente p = leerPacientePorID(id);// lo iguala a la funcion para que sin iterar p sea automaticamente l paciente al cual le pertenece el id
 if (p.id == 0 || p.eliminado) {
 cout << "Paciente no encontrado.\n";
 return;
@@ -549,14 +534,14 @@ fstream archivo("pacientes.bin", ios::binary | ios::in);
 Paciente paciente = {};
 if (!archivo.is_open()) {
 cerr << "Error al abrir pacientes.bin\n";
-paciente.id = -1;
+paciente.id = -1;//senal de error 
 return paciente;
 }
 ArchivoHeader header;
 archivo.read(reinterpret_cast<char*>(&header), sizeof(ArchivoHeader));
 for (int i = 0; i < header.cantidadRegistros; i++) {
-long posicion = sizeof(ArchivoHeader) + i * sizeof(Paciente);
-archivo.seekg(posicion);
+streampos posicion = sizeof(ArchivoHeader) + i * sizeof(Paciente);
+archivo.seekg(posicion);//lectura
 archivo.read(reinterpret_cast<char*>(&paciente), sizeof(Paciente));
 if (!paciente.eliminado && strcmp(paciente.cedula, cedulaBuscada) == 0) {
 archivo.close();
@@ -617,45 +602,45 @@ void reordenarPacientes() {
     ArchivoHeader headerOriginal;
     archivoOriginal.read((char*)&headerOriginal, sizeof(headerOriginal));
 
-    ofstream archivoTemporal("temp_pacientes.bin", ios::binary | ios::trunc);
+    ofstream archivoTemporal("temp_pacientes.bin", ios::binary | ios::trunc);//creo un archivo temporal
     if (!archivoTemporal.is_open()) {
         cerr << "No se pudo crear archivo temporal.\n";
-        archivoOriginal.close();
+        archivoOriginal.close();// si no se pudo crear un archivo temporal me cierra el archivo original
         return;
     }
 
     ArchivoHeader nuevoHeader = {};
-    nuevoHeader.version = headerOriginal.version;
+    nuevoHeader.version = headerOriginal.version;//iguala la version del nuevo header a la version del header original 
 
     // Reservar espacio para el header
     archivoTemporal.write((char*)&nuevoHeader, sizeof(nuevoHeader));
 
     Paciente p;
-    int nuevoID = 1;
+    int nuevoID = 1;//inicializa los nuevos id
 
-    for (int i = 0; i < headerOriginal.cantidadRegistros; i++) {
-        archivoOriginal.read((char*)&p, sizeof(Paciente));
-        if (!p.eliminado) {
+    for (int i = 0; i < headerOriginal.cantidadRegistros; i++) {//itera por la cantidad de registros que tiene el archivo original 
+        archivoOriginal.read((char*)&p, sizeof(Paciente));//lee cada paciente del archivo original
+        if (!p.eliminado) {//si el paciente no fue eliminado 
             p.id = nuevoID++;
-            archivoTemporal.write((char*)&p, sizeof(Paciente));
+            archivoTemporal.write((char*)&p, sizeof(Paciente));//escribe solo los pacientes activos con su respectivo id ordenado
         }
     }
 
     archivoOriginal.close();
 
     // Actualizar header
-    nuevoHeader.cantidadRegistros = nuevoID - 1;
+    nuevoHeader.cantidadRegistros = nuevoID - 1;//actualiza la cantidad de registros 
     nuevoHeader.proximoID = nuevoID;
-    nuevoHeader.registrosActivos = nuevoID - 1;
+    nuevoHeader.registrosActivos = nuevoID - 1;//actualiza la cantidad de registros activos
 
     // Reescribir header al inicio
-    archivoTemporal.seekp(0);
-    archivoTemporal.write((char*)&nuevoHeader, sizeof(nuevoHeader));
+    archivoTemporal.seekp(0);//mueve el puntero de escritura al inicio del archivo
+    archivoTemporal.write((char*)&nuevoHeader, sizeof(nuevoHeader));//escribe el nuevo header
     archivoTemporal.close();
 
     // Reemplazar archivo original
-    remove("pacientes.bin");
-   rename("temp_pacientes.bin", "pacientes.bin");
+    remove("pacientes.bin");//borra el archivo original
+   rename("temp_pacientes.bin", "pacientes.bin");//renombra el archivo temporal como el archivo original
 
     cout << "? Pacientes reordenados automáticamente. Próximo ID: " << nuevoHeader.proximoID << "\n";
 }
@@ -676,7 +661,7 @@ void eliminarPacienteInteractivo() {
 //DOCTORES
 
 void reiniciarArchivoDoctores() {
-ofstream archivo("doctores.bin", std::ios::binary | std::ios::trunc);
+ofstream archivo("doctores.bin", ios::binary | ios::trunc);
 if (!archivo.is_open()) {
 cerr << "No se pudo crear doctores.bin\n";
 return;
@@ -718,7 +703,7 @@ void registrarDoctor() {
 }
 
 Doctor buscarDoctorPorId(int id) {
-    ifstream archivo("doctores.bin", std::ios::binary);
+    ifstream archivo("doctores.bin", ios::binary);
     Doctor resultado;
     resultado.id = 0;
 
@@ -732,7 +717,7 @@ Doctor buscarDoctorPorId(int id) {
         archivo.read((char*)&d, sizeof(Doctor));
         if (!d.eliminado && d.id == id) {
             archivo.close();
-            return d;
+            return d;//retorna el doctor al q le pertenece el id 
         }
     }
     
@@ -748,7 +733,7 @@ Doctor buscarDoctorPorId(int id) {
 void reordenarDoctores() {
     ifstream archivoOriginal("doctores.bin", ios::binary);
     if (!archivoOriginal.is_open()) {
-        std::cerr << "No se pudo abrir doctores.bin\n";
+        cerr << "No se pudo abrir doctores.bin\n";
         return;
     }
 
@@ -908,7 +893,7 @@ void mostrarPacientesDeDoctor(int idDoctor) {
         if (a.idDoctor == idDoctor) {
             // Buscar paciente por ID
             Paciente p;
-            pacientes.clear();
+            pacientes.clear();//resetea el estado del archivo para que puedas seguir usándolo. Se coloca pq recorremos varias veces el archivo, para evitar errores
             pacientes.seekg(sizeof(ArchivoHeader)); // volver al inicio de registros
 
             for (int i = 0; i < header.cantidadRegistros; i++) {
@@ -1079,14 +1064,14 @@ if (!existeDoctor(idDoctor)) {
     nueva.atendida = false;
 
     // Escribir cita
-    archivo.seekp(0, ios::end);
+    archivo.seekp(0, ios::end);//coloca el puntero de escritura al final del archivo
     archivo.write((char*)&nueva, sizeof(Cita));
 
     // Actualizar header
     header.ultimoId++;
     header.cantidadRegistros++;
     archivo.seekp(0);
-    archivo.write((char*)&header, sizeof(header));
+    archivo.write((char*)&header, sizeof(ArchivoHeader));//escribe kas modificaciones del header
 
     archivo.close();
 
@@ -1136,10 +1121,12 @@ void atenderCitaInteractiva() {
     strcpy(consulta.diagnostico, c.motivo);
     strcpy(consulta.tratamiento, "Tratamiento aplicado");
     strcpy(consulta.medicamentos, "Medicamentos recetados");
-    consulta.costo = 0;
+    consulta.costo = 0;//como no se lo pido al usuario lo igualo a 0 para que no quede como basura de memoria
 
     agregarRegistro("historiales.bin", consulta);
-    c.consultaID = consulta.id;
+    c.consultaID = consulta.id;//Se guarda la consulta en historiales.bin. Se vincula la cita con el ID de la consulta.
+
+
 
     archivo.seekp(calcularPosicion(idx, sizeof(Cita)));
     archivo.write((char*)&c, sizeof(Cita));
@@ -1152,8 +1139,12 @@ void verCitasPorFechaInteractiva() {
     char fecha[11];
     cin.ignore();
     cout << "Ingrese la fecha (YYYY-MM-DD): ";
-    cin.getline(fecha, 11);
-    
+cin.getline(fecha, 11);
+
+if (!validarFecha(fecha)) {
+    cout << "❌ Fecha inválida. Intente de nuevo.\n";
+    return;
+}
 
     ifstream archivo("citas.bin", ios::binary);
     if (!archivo.is_open()) {
@@ -1162,7 +1153,7 @@ void verCitasPorFechaInteractiva() {
     }
 
     ArchivoHeader header;
-    archivo.read((char*)&header, sizeof(header));
+    archivo.read((char*)&header, sizeof(ArchivoHeader));
     Cita c;
 
     for (int i = 0; i < header.cantidadRegistros; i++) {
@@ -1452,7 +1443,7 @@ void verificarIntegridadReferencial() {
     }
 
     ArchivoHeader headerCitas;
-    citas.read((char*)&headerCitas, sizeof(headerCitas));
+    citas.read((char*)&headerCitas, sizeof(ArchivoHeader));
 
     Cita c;
     bool errores = false;
@@ -1468,7 +1459,7 @@ void verificarIntegridadReferencial() {
         ifstream doctores("doctores.bin", ios::binary);
         if (doctores.is_open()) {
             ArchivoHeader headerDoc;
-            doctores.read((char*)&headerDoc, sizeof(headerDoc));
+            doctores.read((char*)&headerDoc, sizeof(ArchivoHeader));
             Doctor d;
             for (int j = 0; j < headerDoc.cantidadRegistros; j++) {
                 doctores.read((char*)&d, sizeof(Doctor));
@@ -1511,9 +1502,9 @@ void verificarIntegridadReferencial() {
     }
 }
 
-void verificarIntegridadDeArchivos() {
-    const char* archivos[] = { "pacientes.bin", "doctores.bin", "citas.bin", "historiales.bin" };
-    for (const char* nombre : archivos) {
+void verificarIntegridadDeArchivos() {//verifica que cada archivo se pueda abrir
+    const char* archivos[] = { "pacientes.bin", "doctores.bin", "citas.bin", "historiales.bin" };//arrreglo que contiene los nombres de mis archivos
+    for (const char* nombre : archivos) {//recorre cada nombre en el arreglo
         ifstream archivo(nombre, ios::binary);
         if (!archivo.is_open()) {
           cout << "? No se pudo abrir " << nombre << "\n";
@@ -1531,7 +1522,7 @@ void compactarArchivo(const char* nombreArchivo, size_t tamanoRegistro) {
     }
 
     ArchivoHeader headerOriginal;
-    entrada.read((char*)&headerOriginal, sizeof(headerOriginal));
+    entrada.read((char*)&headerOriginal, sizeof(ArchivoHeader));
 
     ofstream salidaTemp("temp_compactado.bin", ios::binary | ios::trunc);
     if (!salidaTemp.is_open()) {
@@ -1578,11 +1569,19 @@ void compactarArchivo(const char* nombreArchivo, size_t tamanoRegistro) {
 
 void hacerRespaldo() {
     const char* archivos[] = { "pacientes.bin", "doctores.bin", "citas.bin", "historiales.bin" };
+
     for (const char* nombre : archivos) {
         ifstream origen(nombre, ios::binary);
-        ofstream destino((std::string("respaldo_") + nombre).c_str(), ios::binary);
-        if (origen && destino) {
-            destino << origen.rdbuf();
+
+        // Construir nombre del archivo de respaldo con char[]
+        char nombreRespaldo[100]; // tamaño suficiente
+        strcpy(nombreRespaldo, "respaldo_"); // copiar prefijo, es decir nombrerespalde es respaldo_
+        strcat(nombreRespaldo, nombre);      // concatenar nombre original, junta respaldo_ con el nomre og del archivo y ese es ahora mi nombre respaldp
+
+        ofstream destino(nombreRespaldo, ios::binary);//abro el archivo respaldo
+
+        if (origen && destino) {//si ambos se abren correctamente 
+            destino << origen.rdbuf(); // copiar contenido, pasa la info del archivo og al respaldo. rdbuf() significa read buffer.
             cout << "? Respaldo creado para " << nombre << "\n";
         } else {
             cout << "? Error al respaldar " << nombre << "\n";
@@ -1590,21 +1589,28 @@ void hacerRespaldo() {
     }
 }
 
-void restaurarRespaldo() {
+
+void restaurarRespaldo() {//contrario a hacer respaldo pasa los datos guardados en el respaldo a mi archivo original
     const char* archivos[] = { "pacientes.bin", "doctores.bin", "citas.bin", "historiales.bin" };
+
     for (const char* nombre : archivos) {
-        ifstream respaldo((std::string("respaldo_") + nombre).c_str(), ios::binary);
+        char respaldo[100];
+        strcpy(respaldo, "respaldo_");
+        strcat(respaldo, nombre);
+
+        ifstream origen(respaldo, ios::binary);
         ofstream destino(nombre, ios::binary | ios::trunc);
-        if (respaldo && destino) {
-            destino << respaldo.rdbuf();
-            std::cout << "? Restaurado desde respaldo: " << nombre << "\n";
+
+        if (origen && destino) {
+            destino << origen.rdbuf();
+            cout << "✔ Restaurado " << nombre << " desde " << respaldo << "\n";
         } else {
-            cout << "? Error al restaurar " << nombre << "\n";
+            cout << "❌ No se pudo restaurar " << nombre << "\n";
         }
     }
 }
 
-void mostrarEstadisticas() {
+void mostrarEstadisticas() {//la estadistica es cuantas veces uso el archivo y lo uso cada vez que registro algo 
     const char* archivos[] = { "pacientes.bin", "doctores.bin", "citas.bin", "historiales.bin" };
     for (const char* nombre : archivos) {
         ifstream archivo(nombre, ios::binary);
@@ -1619,6 +1625,342 @@ void mostrarEstadisticas() {
         archivo.close();
     }
 }
+
+
+//MENUS
+
+void menuPacientes() {
+int opcion;
+do {
+cout << "\n--- Gestión de Pacientes ---\n";
+cout << "1. Registrar nuevo paciente\n";
+cout << "2. Buscar paciente por ID\n";
+cout << "3. Actualizar paciente\n";
+cout << "4. Eliminar paciente\n";
+cout << "5. Listar pacientes\n";
+cout << "6. Ver historial médico\n";
+cout << "7. Buscar paciente por nombre \n";
+cout << "8. Buscar paciente por cedula \n";
+cout << "9. Ver cuantos pacientes hay registrados\n";
+cout << "0. Volver\n";
+cout << "Opción: ";
+cin >> opcion;
+switch (opcion) {
+case 1: {
+char cedula[20];
+
+cout << "Ingrese la cédula del nuevo paciente: ";
+
+cin.getline(cedula, 20);
+cin.ignore();
+if (cedulaExiste(cedula)) {
+cout << "Ya existe un paciente registrado con esa cédula.\n";
+break;
+}
+// Si no existe, continúa con el registro
+registrarPaciente(cedula); // ? puedes pasar la cédula si tu función lo permite
+break;
+}
+case 2: buscarPacientePorID(); break;
+case 3: actualizarPacienteInteractivo(); break;
+case 4: eliminarPacienteInteractivo(); break;
+case 5: listarRegistrosActivos<Paciente>("pacientes.bin"); break;
+case 6: verHistorialInteractivo(); break;
+case 7: {
+char fragmento[50];
+cin.ignore();
+cout << "Ingrese parte del nombre a buscar: ";
+cin.getline(fragmento, 50);
+buscarPacientesPorNombre(fragmento);
+break;
+}
+case 8: {
+char cedula[20];
+cout << "Ingrese la cédula a buscar: ";
+cin.ignore();
+cin.getline(cedula, 20);
+Paciente p = buscarPacientePorCedula(cedula);
+if (p.id != -1) {
+cout << "Paciente encontrado: " << p.nombre << " " << p.apellido << endl;
+} else {
+cout << "No se encontró ningún paciente con esa cédula.\n";
+}
+break;
+}
+case 9: mostrarHeader("pacientes.bin"); break;
+}
+} while (opcion != 0);
+}
+
+
+void menuDoctores() {
+    int opcion;
+    do {
+        cout << "\n--- Gestión de Doctores ---\n";
+        cout << "1. Registrar nuevo doctor\n";
+        cout << "2. Buscar doctor por ID\n";
+        cout << "3. Buscar doctores por especialidad\n";
+        cout << "4. Asignar paciente a doctor\n";
+        cout << "5. Ver pacientes asignados a doctor\n";
+        cout << "6. Listar todos los doctores\n";
+        cout << "7. Eliminar doctor\n";
+        cout << "8. Ver citas de un doctor\n";
+        cout << "9. Ver cuántos doctores hay registrados\n";
+        cout << "0. Volver\n";
+        cout << "Opción: ";
+        cin >> opcion;
+
+        switch (opcion) {
+            case 1:
+                registrarDoctor();
+                break;
+
+            case 2: {
+                int id;
+                cout << "Ingrese ID del doctor: ";
+                cin >> id;
+                Doctor d = buscarDoctorPorId(id);
+                if (d.id == 0 || d.eliminado) {
+                    cout << "Doctor no encontrado.\n";
+                } else {
+                    cout << "\nNombre: " << d.nombre << " " << d.apellido << "\n";
+                    cout << "Cedula Profesional: " << d.cedulaProfesional << "\n";
+                    cout << "Especialidad: " << d.especialidad << "\n";
+                    cout << "Anios de experiencia: " << d.aniosExperiencia << "\n";
+                    cout << "Costo Consulta: " << d.costoConsulta << "\n";
+                    cout << "Horario de atencion: " << d.horarioAtencion<< "\n";
+                    cout << "Teléfono: " << d.telefono << "\n";
+                    cout << "Email: " << d.email << "\n";
+                }
+                break;
+            }
+
+            case 3: {
+                char especialidad[50];
+                cin.ignore();
+                cout << "Ingrese especialidad: ";
+                cin.getline(especialidad, 50);
+                buscarDoctoresPorEspecialidad(especialidad);
+
+                break;
+            }
+
+            case 4: {
+                int idDoctor, idPaciente;
+                cout << "Ingrese ID del doctor: ";
+                cin >> idDoctor;
+                cout << "Ingrese ID del paciente: ";
+                cin >> idPaciente;
+
+                if (asignarPacienteADoctor(idDoctor, idPaciente)) {
+                    cout << "Asignación completada.\n";
+                } else {
+                    cout << "No se pudo asignar el paciente.\n";
+                }
+                break;
+            }
+       case 5: {
+    int id;
+    cout << "ID del doctor: ";
+    cin >> id;
+    Doctor d = buscarDoctorPorId(id);
+    if (d.id != 0) {
+        cout << "Doctor: " << d.nombre << " " << d.apellido << "\n";
+        mostrarPacientesDeDoctor(id);
+    } else {
+        cout << "Doctor no encontrado.\n";
+    }
+    break;
+}
+
+
+
+                
+            case 6:
+                listarRegistrosActivos<Doctor>("doctores.bin");
+                break;
+
+            case 7:
+                eliminarDoctorInteractivo(); // incluye reordenarDoctores()
+                break;
+
+            case 8: {
+                int id;
+                cout << "ID del doctor: ";
+                cin >> id;
+                verCitasDeDoctor(id);
+
+                break;
+            }
+            case 9: contarDoctoresRegistrados(); break;
+        }
+    } while (opcion != 0);{
+	}
+}
+
+
+
+void menuCitas() {
+    int opcion;
+    do {
+        cout << "\n--- Menú de Citas ---\n";
+        cout << "1. Agendar nueva cita\n";
+        cout << "2. Cancelar cita\n";
+        cout << "3. Atender cita\n";
+        cout << "4. Ver citas de un paciente\n";
+        cout << "5. Ver citas de un doctor\n";
+        cout << "6. Ver citas de una fecha\n";
+        cout << "7. Ver citas pendientes\n";
+        cout << "8. Ver cuántas citas hay registradas\n";
+		cout << "9. Volver al menú principal\n";
+        cout << "Seleccione una opción: ";
+        cin >> opcion;
+
+        switch (opcion) {
+            case 1: agendarCitaInteractiva(); break;
+            case 2: cancelarCitaInteractiva(); break;
+            case 3: atenderCitaInteractiva(); break;
+            case 4: verCitasDePacienteInteractiva(); break;
+            case 5: verCitasDeDoctorInteractiva(); break;
+            case 6: verCitasPorFechaInteractiva(); break;
+            case 7: verCitasPendientes(); break;
+            case 8: contarCitasRegistradas(); break;
+            case 9: cout << "Volviendo al menú principal...\n"; break;
+			default: cout << "Opción inválida.\n";
+        }
+    } while (opcion != 9);
+}
+
+
+
+void menuMantenimientoArchivos() {
+    int opcion;
+    do {
+        cout << "\n=== MANTENIMIENTO DE ARCHIVOS ===" << endl;
+        cout << "1. Verificar integridad de archivos" << endl;
+        cout << "2. Verificar integridad referencial" << endl;
+        cout << "3. Compactar archivo de pacientes" << endl;
+        cout << "4. Compactar archivo de doctores" << endl;
+        cout << "5. Compactar archivo de citas" << endl;
+        cout << "6. Compactar archivo de historiales" << endl;
+        cout << "7. Reiniciar archivo de Pacientes" << endl;
+        cout << "8. Reiniciar archivo de Doctores" << endl;
+        cout << "9. Reiniciar archivo de Citas" << endl;
+        cout << "10. Hacer respaldo de datos" << endl;
+        cout << "11. Restaurar desde respaldo" << endl;
+        cout << "12. Estadísticas de uso de archivos" << endl;
+        cout << "13. Volver al menú principal" << endl;
+        cout << "Opción: ";
+        cin >> opcion;
+
+        switch (opcion) {
+            case 1: verificarIntegridadDeArchivos(); break;
+            case 2: verificarIntegridadReferencial(); break;
+            case 3: compactarArchivo("pacientes.bin", sizeof(Paciente)); break;
+            case 4: compactarArchivo("doctores.bin", sizeof(Doctor)); break;
+            case 5: compactarArchivo("citas.bin", sizeof(Cita)); break;
+            case 6: compactarArchivo("historiales.bin", sizeof(HistorialMedico)); break;
+            case 7: reiniciarArchivoPacientes(); break;
+            case 8: reiniciarArchivoDoctores(); break;
+            case 9: reiniciarArchivoCitas(); break;
+            case 10: hacerRespaldo(); break;
+            case 11: restaurarRespaldo(); break;
+            case 12: mostrarEstadisticas(); break;
+            case 13: cout << "Volviendo al menú principal...\n"; break;
+            default: cout << "Opción inválida.\n";
+        }
+    } while (opcion != 13);
+}
+
+void menuPrincipal(Hospital* hospital) {
+    int opcion;
+    do {
+        cout << "\n=== SISTEMA DE GESTIÓN HOSPITALARIA ===\n";
+        cout << "1. Gestión de Pacientes\n";
+        cout << "2. Gestión de Doctores\n";
+        cout << "3. Gestión de Citas\n";
+        cout << "4. Mantenimiento de Archivos\n";
+        cout << "5. Guardar y Salir\n";
+        cout << "Seleccione una opción: ";
+        cin >> opcion;
+
+        switch (opcion) {
+            case 1: menuPacientes(); break;
+            case 2: menuDoctores(); break;
+            case 3: menuCitas(); break;
+            case 4: menuMantenimientoArchivos(); break;
+
+            case 5: {
+                ofstream archivo("hospital.bin", ios::binary);
+                if (archivo.is_open()) {
+                    archivo.write((char*)hospital, sizeof(Hospital));
+                    archivo.close();
+                    cout << "Datos del hospital guardados.\n";
+                }
+                break;
+            }
+            default: cout << "Opción inválida.\n";
+        }
+    } while (opcion != 5);
+}
+
+//INT MAIN
+
+int main() {
+    // Archivos que usará el sistema
+    const char* archivos[] = {
+        "hospital.bin", "pacientes.bin", "doctores.bin", "citas.bin", "historiales.bin"
+    };
+
+    // Verificar e inicializar cada archivo si no existe
+    for (const char* nombre : archivos) {
+        if (!verificarArchivo(nombre)) {
+            cout << "Inicializando archivo: " << nombre << "\n";
+            inicializarArchivo(nombre);
+        }
+    }
+    if (!verificarArchivo("pacientes.bin")) {
+    inicializarArchivo("pacientes.bin");
+}
+
+
+
+    // Cargar datos del hospital
+    Hospital* hospital = new Hospital;
+    ifstream archivoHospital("hospital.bin", ios::binary);
+    if (archivoHospital.is_open()) {
+        archivoHospital.read((char*)hospital, sizeof(Hospital));
+        archivoHospital.close();
+    } else {
+        std::cerr << "Error al cargar datos del hospital.\n";
+        delete hospital;
+        return 1;
+    }
+
+    // Mostrar datos básicos del hospital
+    cout << "\n=== BIENVENIDO AL SISTEMA HOSPITALARIO ===\n";
+    cout << "Hospital: " << hospital->nombre << "\n";
+    cout << "Dirección: " << hospital->direccion << "\n";
+    cout << "Teléfono: " << hospital->telefono << "\n";
+
+    // Lanzar menú principal
+    menuPrincipal(hospital);
+
+    // Guardar datos del hospital al salir
+    ofstream guardar("hospital.bin", ios::binary);
+    if (guardar.is_open()) {
+        guardar.write((char*)hospital, sizeof(Hospital));
+        guardar.close();
+        cout << "Datos del hospital guardados correctamente.\n";
+    }
+
+    // Liberar memoria
+    delete hospital;
+    return 0;
+}
+
+
+
 
 
 
